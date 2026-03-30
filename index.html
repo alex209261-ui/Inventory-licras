@@ -223,7 +223,6 @@ function totalDiseno(d){ return COLORES.reduce((s,c) => s + TALLAS.reduce((s2,t)
 function renderResumen(){
   document.getElementById("totalBadge").textContent = totalGeneral() + " pzs";
 
-  // Totales por color
   document.getElementById("totalesColor").innerHTML = COLORES.map(c =>
     `<div class="card" style="border:1px solid ${c==='Blanca'?'#444':'#333'}">
       <span style="font-size:20px">${c==='Blanca'?'⬜':'⬛'}</span>
@@ -232,7 +231,6 @@ function renderResumen(){
     </div>`
   ).join("");
 
-  // Grids
   document.getElementById("gridsDiseno").innerHTML = disenos.map(d => {
     const headerCells = TALLAS.map(t => `<span style="text-align:center">${t}</span>`).join("");
     const rows = COLORES.map(c => {
@@ -251,7 +249,6 @@ function renderResumen(){
     </div>`;
   }).join("");
 
-  // Historial
   const hEl = document.getElementById("histReciente");
   if(historial.length === 0){ hEl.innerHTML = ""; return; }
   hEl.innerHTML = `<span class="label" style="margin-top:16px;display:block">Últimos movimientos</span>` +
@@ -265,16 +262,13 @@ function renderResumen(){
 }
 
 function renderMovimiento(){
-  // Select
   const sel = document.getElementById("selDiseno");
   sel.innerHTML = disenos.map(d => `<option value="${d}" ${d===selDiseno?'selected':''}>${d}</option>`).join("");
 
-  // Pills color
   document.getElementById("pillColor").innerHTML = COLORES.map(c =>
     `<button class="pill ${selColor===c?'active':''}" data-color="${c}">${c==='Blanca'?'⬜':'⬛'} ${c}</button>`
   ).join("");
 
-  // Pills talla
   document.getElementById("pillTalla").innerHTML = TALLAS.map(t =>
     `<button class="pill ${selTalla===t?'active':''}" data-talla="${t}">${t}</button>`
   ).join("");
@@ -284,14 +278,16 @@ function renderMovimiento(){
 }
 
 function renderDisenos(){
-  document.getElementById("listDisenos").innerHTML = disenos.map(d =>
-    `<div class="card" style="padding:10px 14px;font-size:13px">🎨 ${d}</div>`
+  document.getElementById("listDisenos").innerHTML = disenos.map((d,i) =>
+    `<div class="card" style="padding:10px 14px;font-size:13px;display:flex;justify-content:space-between;align-items:center">
+      <span>🎨 ${d}</span>
+      <button onclick="eliminarDiseno('${d.replace(/'/g,"\\'")}')" style="background:none;border:1px solid #E85454;color:#E85454;border-radius:6px;padding:4px 10px;font-size:11px;font-family:'Courier New',monospace;cursor:pointer">✕</button>
+    </div>`
   ).join("");
 }
 
 function renderAll(){ renderResumen(); renderMovimiento(); renderDisenos(); }
 
-// NAV
 document.querySelectorAll(".nav button").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
@@ -301,7 +297,6 @@ document.querySelectorAll(".nav button").forEach(btn => {
   });
 });
 
-// Movimiento events
 document.getElementById("selDiseno").addEventListener("change", e => { selDiseno = e.target.value; renderMovimiento(); });
 
 document.getElementById("pillColor").addEventListener("click", e => {
@@ -336,7 +331,6 @@ function registrarMov(tipo){
 document.getElementById("btnEntrada").addEventListener("click", () => registrarMov("entrada"));
 document.getElementById("btnSalida").addEventListener("click", () => registrarMov("salida"));
 
-// Agregar diseño
 document.getElementById("btnAddDiseno").addEventListener("click", () => {
   const nombre = document.getElementById("inputDiseno").value.trim();
   if(!nombre || disenos.includes(nombre)) return;
@@ -346,14 +340,22 @@ document.getElementById("btnAddDiseno").addEventListener("click", () => {
   selDiseno = nombre;
   guardar(); renderAll();
   showToast("🎨 Diseño agregado");
-  // Switch to movimiento
   document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
   document.querySelector('[data-tab="movimiento"]').classList.add("active");
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
   document.getElementById("sec-movimiento").classList.add("active");
 });
 
-// Reset
+function eliminarDiseno(nombre){
+  if(disenos.length <= 1){ showToast("⚠️ Debe haber al menos 1 diseño"); return; }
+  if(!confirm("¿Eliminar diseño '"+nombre+"' y todo su inventario?")) return;
+  disenos = disenos.filter(d => d !== nombre);
+  COLORES.forEach(c => TALLAS.forEach(t => { delete inventario[k(nombre,c,t)]; }));
+  if(selDiseno === nombre) selDiseno = disenos[0];
+  guardar(); renderAll();
+  showToast("🗑️ Diseño eliminado");
+}
+
 document.getElementById("btnReset").addEventListener("click", () => {
   if(!confirm("¿Borrar TODO el inventario y empezar de cero?")) return;
   inventario = {}; disenos = [...DEFAULT_DISENOS]; historial = [];
@@ -364,7 +366,6 @@ document.getElementById("btnReset").addEventListener("click", () => {
   showToast("🗑️ Datos reseteados");
 });
 
-// Init
 cargar();
 renderAll();
 </script>
