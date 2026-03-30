@@ -1,47 +1,372 @@
-<!DOCTYPE html>
-<html>
+!DOCTYPE html>
+<html lang="es">
 <head>
-    <title>Inventario de Playeras</title>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Inventario">
+<title>▪ Inventario Playeras</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family: 'Courier New', Courier, monospace;
+    background: #0D0D0D;
+    color: #F5F5F0;
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    padding-bottom: 70px;
+    -webkit-user-select: none; user-select: none;
+  }
+  .header { padding:20px 16px 12px; border-bottom:1px solid #555; display:flex; justify-content:space-between; align-items:center; }
+  .header h1 { font-size:18px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#E8C547; }
+  .badge { background:#E8C547; color:#0D0D0D; font-weight:800; font-size:14px; padding:4px 12px; border-radius:20px; }
+  .section { padding:16px; display:none; }
+  .section.active { display:block; }
+  .label { font-size:10px; text-transform:uppercase; letter-spacing:2px; color:#888; margin-bottom:6px; display:block; }
+  .card { background:#1A1A1A; border-radius:10px; padding:14px; margin-bottom:10px; }
+  .totales { display:flex; gap:10px; margin-bottom:16px; }
+  .totales .card { flex:1; text-align:center; }
+  .totales .num { display:block; font-size:22px; font-weight:800; margin-top:4px; }
+  .totales .lbl { font-size:10px; color:#888; text-transform:uppercase; }
+  .grid-row { display:grid; grid-template-columns:1fr repeat(6,38px); gap:4px; align-items:center; padding:6px 0; font-size:12px; }
+  .grid-header { color:#888; font-size:10px; text-transform:uppercase; letter-spacing:1px; }
+  .grid-header span, .grid-row .cell { text-align:center; }
+  .cell { font-weight:600; font-size:13px; }
+  .cell.zero { color:#555; }
+  .diseno-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .diseno-title span:first-child { font-weight:700; font-size:13px; color:#E8C547; }
+  .diseno-title span:last-child { font-size:12px; color:#888; }
+  select {
+    width:100%; padding:10px 12px; background:#1A1A1A; border:1px solid #555;
+    border-radius:8px; color:#F5F5F0; font-size:14px; font-family:'Courier New',monospace;
+    margin-bottom:14px; appearance:none; -webkit-appearance:none;
+  }
+  .pill-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .pill {
+    padding:8px 16px; border-radius:20px; border:1px solid #555; background:transparent;
+    color:#F5F5F0; font-size:13px; font-family:'Courier New',monospace; cursor:pointer;
+  }
+  .pill.active { border-color:#E8C547; background:#E8C547; color:#0D0D0D; font-weight:700; }
+  .stock-preview { text-align:center; padding:10px; background:#222; border-radius:8px; margin-bottom:14px; font-size:13px; color:#888; }
+  .stock-num { font-size:28px; font-weight:800; color:#F5F5F0; display:block; }
+  .qty-row { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+  .qty-btn {
+    width:40px; height:40px; border-radius:20px; border:1px solid #555; background:transparent;
+    color:#F5F5F0; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-family:'Courier New',monospace;
+  }
+  .qty-val { font-size:24px; font-weight:700; min-width:40px; text-align:center; }
+  .action-row { display:flex; gap:10px; }
+  .btn-entrada, .btn-salida {
+    flex:1; padding:14px; border-radius:10px; border:none; font-size:14px; font-weight:700;
+    font-family:'Courier New',monospace; text-transform:uppercase; letter-spacing:1px; cursor:pointer;
+  }
+  .btn-entrada { background:#5AE854; color:#0D0D0D; }
+  .btn-salida { background:#E85454; color:#F5F5F0; }
+  .hist-item { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:8px; margin-bottom:6px; font-size:12px; }
+  .hist-entrada { background:rgba(90,232,84,0.12); }
+  .hist-salida { background:rgba(232,84,84,0.12); }
+  input[type=text] {
+    width:100%; padding:10px 12px; background:#1A1A1A; border:1px solid #555;
+    border-radius:8px; color:#F5F5F0; font-size:14px; font-family:'Courier New',monospace; margin-bottom:14px;
+  }
+  .btn-add {
+    width:100%; padding:14px; border-radius:10px; border:2px solid #E8C547; background:transparent;
+    color:#E8C547; font-size:14px; font-weight:700; font-family:'Courier New',monospace;
+    text-transform:uppercase; letter-spacing:1px; cursor:pointer;
+  }
+  .btn-reset {
+    width:100%; padding:12px; border-radius:10px; border:1px solid #E85454; background:transparent;
+    color:#E85454; font-size:12px; font-weight:700; font-family:'Courier New',monospace;
+    text-transform:uppercase; letter-spacing:1px; cursor:pointer; margin-top:8px;
+  }
+  .nav {
+    display:flex; position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:430px; background:#1A1A1A; border-top:1px solid #555; z-index:100;
+  }
+  .nav button {
+    flex:1; padding:14px 0 12px; border:none; background:none; color:#888;
+    font-size:11px; font-family:'Courier New',monospace; text-transform:uppercase;
+    letter-spacing:1px; cursor:pointer; border-top:2px solid transparent;
+  }
+  .nav button.active { color:#E8C547; font-weight:700; border-top-color:#E8C547; }
+  .toast {
+    position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#1A1A1A;
+    border:1px solid #E8C547; color:#F5F5F0; padding:10px 20px; border-radius:10px;
+    font-size:13px; font-family:'Courier New',monospace; z-index:200;
+    box-shadow:0 4px 20px rgba(0,0,0,0.5); transition:opacity 0.3s; pointer-events:none;
+  }
+  .danger-zone { margin-top:32px; border-top:1px solid #555; padding-top:20px; }
+  .save-note { text-align:center; margin-top:12px; font-size:10px; color:#555; }
+  .color-label { font-size:11px; color:#888; }
+</style>
 </head>
 <body>
-    <h1>Inventario de Playeras</h1>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Color</th>
-            <th>Talla</th>
-            <th>Precio</th>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td>Playera A</td>
-            <td>Rojo</td>
-            <td>M</td>
-            <td>$200</td>
-        </tr>
-        <tr>
-            <td>2</td>
-            <td>Playera B</td>
-            <td>Azul</td>
-            <td>L</td>
-            <td>$220</td>
-        </tr>
-        <tr>
-            <td>3</td>
-            <td>Playera C</td>
-            <td>Verde</td>
-            <td>S</td>
-            <td>$180</td>
-        </tr>
-        <tr>
-            <td>4</td>
-            <td>Playera D</td>
-            <td>Negro</td>
-            <td>XL</td>
-            <td>$250</td>
-        </tr>
-    </table>
+
+<div class="toast" id="toast" style="opacity:0"></div>
+
+<div class="header">
+  <h1>▪ Inventario</h1>
+  <span class="badge" id="totalBadge">0 pzs</span>
+</div>
+
+<!-- RESUMEN -->
+<div class="section active" id="sec-resumen">
+  <div class="totales" id="totalesColor"></div>
+  <div id="gridsDiseno"></div>
+  <div id="histReciente"></div>
+</div>
+
+<!-- MOVIMIENTO -->
+<div class="section" id="sec-movimiento">
+  <span class="label">Diseño</span>
+  <select id="selDiseno"></select>
+
+  <span class="label">Color</span>
+  <div class="pill-row" id="pillColor"></div>
+
+  <span class="label">Talla</span>
+  <div class="pill-row" id="pillTalla"></div>
+
+  <div class="stock-preview">
+    Stock actual
+    <span class="stock-num" id="stockActual">0</span>
+  </div>
+
+  <span class="label">Cantidad</span>
+  <div class="qty-row">
+    <button class="qty-btn" id="qtyMinus">−</button>
+    <span class="qty-val" id="qtyVal">1</span>
+    <button class="qty-btn" id="qtyPlus">+</button>
+  </div>
+
+  <div class="action-row">
+    <button class="btn-entrada" id="btnEntrada">＋ Entrada</button>
+    <button class="btn-salida" id="btnSalida">− Salida</button>
+  </div>
+</div>
+
+<!-- DISEÑOS -->
+<div class="section" id="sec-agregar">
+  <span class="label">Nombre del nuevo diseño</span>
+  <input type="text" id="inputDiseno" placeholder="Ej: Tribal, Vintage, etc.">
+  <button class="btn-add" id="btnAddDiseno">+ Agregar diseño</button>
+  <div style="margin-top:24px">
+    <span class="label">Diseños actuales</span>
+    <div id="listDisenos"></div>
+  </div>
+  <div class="danger-zone">
+    <span class="label">Zona de peligro</span>
+    <button class="btn-reset" id="btnReset">🗑️ Resetear todo el inventario</button>
+    <div class="save-note">💾 Los datos se guardan automáticamente</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="active" data-tab="resumen">📊 Resumen</button>
+  <button data-tab="movimiento">📦 Movimiento</button>
+  <button data-tab="agregar">🎨 Diseños</button>
+</div>
+
+<script>
+const TALLAS = ["XS","S","M","L","XL","2XL"];
+const COLORES = ["Blanca","Negra"];
+const DEFAULT_DISENOS = ["Logo Front","Estampado Full","Básica"];
+const STORAGE_KEY = "inv-playeras-v1";
+
+let inventario = {};
+let disenos = [...DEFAULT_DISENOS];
+let historial = [];
+let selDiseno = DEFAULT_DISENOS[0];
+let selColor = "Blanca";
+let selTalla = "M";
+let cantidad = 1;
+
+function k(d,c,t){ return d+"|"+c+"|"+t; }
+
+function initInventario(){
+  disenos.forEach(d => COLORES.forEach(c => TALLAS.forEach(t => {
+    if(!(k(d,c,t) in inventario)) inventario[k(d,c,t)] = 0;
+  })));
+}
+
+function guardar(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({inventario, disenos, historial})); } catch(e){}
+}
+
+function cargar(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const data = JSON.parse(raw);
+      if(data.inventario) inventario = data.inventario;
+      if(data.disenos) disenos = data.disenos;
+      if(data.historial) historial = data.historial;
+    }
+  } catch(e){}
+  initInventario();
+}
+
+function showToast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.style.opacity = "1";
+  setTimeout(() => el.style.opacity = "0", 1800);
+}
+
+function totalGeneral(){ return Object.values(inventario).reduce((a,b)=>a+b, 0); }
+function totalColor(c){ return disenos.reduce((s,d) => s + TALLAS.reduce((s2,t) => s2 + (inventario[k(d,c,t)]||0), 0), 0); }
+function totalDiseno(d){ return COLORES.reduce((s,c) => s + TALLAS.reduce((s2,t) => s2 + (inventario[k(d,c,t)]||0), 0), 0); }
+
+function renderResumen(){
+  document.getElementById("totalBadge").textContent = totalGeneral() + " pzs";
+
+  // Totales por color
+  document.getElementById("totalesColor").innerHTML = COLORES.map(c =>
+    `<div class="card" style="border:1px solid ${c==='Blanca'?'#444':'#333'}">
+      <span style="font-size:20px">${c==='Blanca'?'⬜':'⬛'}</span>
+      <span class="num">${totalColor(c)}</span>
+      <span class="lbl">${c}s</span>
+    </div>`
+  ).join("");
+
+  // Grids
+  document.getElementById("gridsDiseno").innerHTML = disenos.map(d => {
+    const headerCells = TALLAS.map(t => `<span style="text-align:center">${t}</span>`).join("");
+    const rows = COLORES.map(c => {
+      const cells = TALLAS.map(t => {
+        const v = inventario[k(d,c,t)]||0;
+        return `<span class="cell ${v===0?'zero':''}">${v}</span>`;
+      }).join("");
+      return `<div class="grid-row" style="border-top:1px solid rgba(85,85,85,0.13)">
+        <span class="color-label">${c==='Blanca'?'⬜':'⬛'} ${c}</span>${cells}
+      </div>`;
+    }).join("");
+    return `<div class="card">
+      <div class="diseno-title"><span>${d}</span><span>${totalDiseno(d)} pzs</span></div>
+      <div class="grid-row grid-header"><span></span>${headerCells}</div>
+      ${rows}
+    </div>`;
+  }).join("");
+
+  // Historial
+  const hEl = document.getElementById("histReciente");
+  if(historial.length === 0){ hEl.innerHTML = ""; return; }
+  hEl.innerHTML = `<span class="label" style="margin-top:16px;display:block">Últimos movimientos</span>` +
+    historial.slice(0,5).map(h =>
+      `<div class="hist-item hist-${h.tipo}">
+        <div><span style="font-weight:700">${h.tipo==='entrada'?'＋':'−'} ${h.cantidad}</span>
+        <span style="color:#888;margin-left:8px">${h.diseno} · ${h.color} · ${h.talla}</span></div>
+        <span style="color:#555;font-size:10px">Stock: ${h.stock}</span>
+      </div>`
+    ).join("");
+}
+
+function renderMovimiento(){
+  // Select
+  const sel = document.getElementById("selDiseno");
+  sel.innerHTML = disenos.map(d => `<option value="${d}" ${d===selDiseno?'selected':''}>${d}</option>`).join("");
+
+  // Pills color
+  document.getElementById("pillColor").innerHTML = COLORES.map(c =>
+    `<button class="pill ${selColor===c?'active':''}" data-color="${c}">${c==='Blanca'?'⬜':'⬛'} ${c}</button>`
+  ).join("");
+
+  // Pills talla
+  document.getElementById("pillTalla").innerHTML = TALLAS.map(t =>
+    `<button class="pill ${selTalla===t?'active':''}" data-talla="${t}">${t}</button>`
+  ).join("");
+
+  document.getElementById("stockActual").textContent = inventario[k(selDiseno, selColor, selTalla)] || 0;
+  document.getElementById("qtyVal").textContent = cantidad;
+}
+
+function renderDisenos(){
+  document.getElementById("listDisenos").innerHTML = disenos.map(d =>
+    `<div class="card" style="padding:10px 14px;font-size:13px">🎨 ${d}</div>`
+  ).join("");
+}
+
+function renderAll(){ renderResumen(); renderMovimiento(); renderDisenos(); }
+
+// NAV
+document.querySelectorAll(".nav button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    document.getElementById("sec-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+// Movimiento events
+document.getElementById("selDiseno").addEventListener("change", e => { selDiseno = e.target.value; renderMovimiento(); });
+
+document.getElementById("pillColor").addEventListener("click", e => {
+  const btn = e.target.closest("[data-color]"); if(!btn) return;
+  selColor = btn.dataset.color; renderMovimiento();
+});
+
+document.getElementById("pillTalla").addEventListener("click", e => {
+  const btn = e.target.closest("[data-talla]"); if(!btn) return;
+  selTalla = btn.dataset.talla; renderMovimiento();
+});
+
+document.getElementById("qtyMinus").addEventListener("click", () => { if(cantidad>1) cantidad--; renderMovimiento(); });
+document.getElementById("qtyPlus").addEventListener("click", () => { cantidad++; renderMovimiento(); });
+
+function registrarMov(tipo){
+  const kk = k(selDiseno, selColor, selTalla);
+  const actual = inventario[kk] || 0;
+  if(cantidad <= 0) return;
+  if(tipo === "salida" && actual < cantidad){ showToast("⚠️ Stock insuficiente"); return; }
+  const nuevo = tipo === "entrada" ? actual + cantidad : actual - cantidad;
+  inventario[kk] = nuevo;
+  historial.unshift({
+    fecha: new Date().toLocaleString("es-MX",{hour12:true}),
+    tipo, diseno:selDiseno, color:selColor, talla:selTalla, cantidad, stock:nuevo
+  });
+  cantidad = 1;
+  guardar(); renderAll();
+  showToast(tipo==="entrada" ? "✅ Entrada registrada" : "📦 Salida registrada");
+}
+
+document.getElementById("btnEntrada").addEventListener("click", () => registrarMov("entrada"));
+document.getElementById("btnSalida").addEventListener("click", () => registrarMov("salida"));
+
+// Agregar diseño
+document.getElementById("btnAddDiseno").addEventListener("click", () => {
+  const nombre = document.getElementById("inputDiseno").value.trim();
+  if(!nombre || disenos.includes(nombre)) return;
+  disenos.push(nombre);
+  COLORES.forEach(c => TALLAS.forEach(t => { inventario[k(nombre,c,t)] = 0; }));
+  document.getElementById("inputDiseno").value = "";
+  selDiseno = nombre;
+  guardar(); renderAll();
+  showToast("🎨 Diseño agregado");
+  // Switch to movimiento
+  document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+  document.querySelector('[data-tab="movimiento"]').classList.add("active");
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById("sec-movimiento").classList.add("active");
+});
+
+// Reset
+document.getElementById("btnReset").addEventListener("click", () => {
+  if(!confirm("¿Borrar TODO el inventario y empezar de cero?")) return;
+  inventario = {}; disenos = [...DEFAULT_DISENOS]; historial = [];
+  selDiseno = DEFAULT_DISENOS[0];
+  initInventario();
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+  renderAll();
+  showToast("🗑️ Datos reseteados");
+});
+
+// Init
+cargar();
+renderAll();
+</script>
 </body>
 </html>
